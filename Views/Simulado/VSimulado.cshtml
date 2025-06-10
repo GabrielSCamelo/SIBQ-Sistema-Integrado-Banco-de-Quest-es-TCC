@@ -1,0 +1,143 @@
+﻿@model SIBQ.Models.Simulado
+@using Newtonsoft.Json
+
+@{
+    var isProfessor = (bool)ViewBag.IsProfessor;
+    ViewData["Title"] = "Visualizar Simulado";
+}
+
+<div class="container mt-4" ng-controller="SimuladoVController as vm">
+    <h2 class="text-center mb-1">@Model.Titulo</h2>
+    @if (isProfessor)
+    {
+    <div class="text-center mb-3">
+        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalDesempenho">Relatório de Desempenho</button>
+    </div>
+    }
+    <div class="card">
+        <div class="card-body">
+            <div id="questoes-container">
+            @for (int i = 0; i < Model.simulado_Questaos.Count; i++)
+            {
+                var questao = Model.simulado_Questaos[i].Questao;
+                    <div class="card mb-4 shadow questao-paginada" data-index="@i" ng-show="vm.isQuestaoVisivel(@i)">
+                    <div class="card-header">
+                        <h5>@($"{i + 1}. {questao.Titulo}")</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Disciplina:</strong> @questao.Disciplina?.Nome</p>
+                        <p>@questao.Enunciado</p>
+
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item">A) @questao.OpcaoA</li>
+                            <li class="list-group-item">B) @questao.OpcaoB</li>
+                            <li class="list-group-item">C) @questao.OpcaoC</li>
+                            <li class="list-group-item">D) @questao.OpcaoD</li>
+                            <li class="list-group-item">E) @questao.OpcaoE</li>
+                        </ul>
+
+                        <div class=" d-flex justify-content-between align-items-center">
+                                @if (!isProfessor)
+                                {
+                                    var respostaAluno = Model.simulado_Alunos.FirstOrDefault()?.Respostas
+                                    ?.FirstOrDefault(r => r.QuestaoId == questao.Id);
+
+                                    var resposta = respostaAluno?.Resposta;
+                                    string corClasse = "alert-secondary";
+                                    string respostaTexto = "Não respondido";
+
+                                    if (resposta != null)
+                                    {
+                                        if (questao.OpcaoCorretaIndex == resposta)
+                                        {
+                                            corClasse = "alert-success";
+                                            respostaTexto = resposta.ToString();
+                                        }
+                                        else
+                                        {
+                                            corClasse = "alert-danger";
+                                            respostaTexto = resposta.ToString();
+                                        }
+                                    }
+                                    else
+                                    {
+                                        corClasse = "alert-warning";
+                                    }
+                                     <div class="alert alert-info">
+                                        <strong>Resposta Correta:</strong>
+                                        <span>@questao.OpcaoCorretaIndex</span>
+                                    </div>
+                                    <div class="alert @corClasse">
+                                        <strong>Resposta do Aluno:</strong>
+                                        <span>@respostaTexto</span><br />
+                                        
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-info">
+                                        <strong>Resposta Correta:</strong>
+                                        <span>@questao.OpcaoCorretaIndex</span>
+                                    </div>
+                                }
+                        </div>
+                    </div>
+                </div>
+            }
+                <div class="d-flex justify-content-between mb-4">
+                    <button type="button" class="btn btn-primary" ng-click="vm.voltarPagina()">Anterior</button>
+                    <span id="pagina-atual" class="align-self-center">Página {{ vm.paginaAtual + 1 }}</span>
+                    <button type="button" class="btn btn-primary" ng-click="vm.proximaPagina()">Próxima</button>
+                 </div>
+            </div>
+        </div>
+    </div>
+    
+
+    <!-- Modal de Relatório de Desempenho -->
+    <div class="modal fade" id="modalDesempenho" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Relatório de Desempenho</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="selectTurma" class="form-label">Selecione a turma:</label>
+                        <select id="selectTurma" class="form-select" onchange="atualizarTabelaDesempenho()">
+                            <option selected disabled>Escolha a turma</option>
+                        </select>
+                    </div>
+
+                    <canvas id="graficoDesempenho" height="150"></canvas>
+
+                    <hr />
+
+                    <table class="table table-bordered mt-4">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Questão</th>
+                                <th>Acertos</th>
+                                <th>Total</th>
+                                <th>% Acerto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaDesempenho"></tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        window.simuladoData = {
+            simuladoId: @Model.Id,
+            questoesOrdem: [@string.Join(", ", Model.simulado_Questaos.Select(q => q.Questao.Id))]
+        };
+    </script>
+}

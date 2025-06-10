@@ -1,0 +1,116 @@
+﻿@model SIBQ.Models.SimuladoViewModel
+@{
+    ViewData["Title"] = "Fazer Simulado";
+    var simuladoId = Model.Simulado.Id;
+}
+
+<div class="container mt-4" ng-controller="simuladoFController">
+    <h2 class="text-center mb-1">@Model.Simulado.Titulo</h2>
+    <h5 class="text-center mb-3">BOA AVALIAÇÃO!</h5>
+    <div class="card">
+        <div class="card-body">
+            <form method="post" asp-controller="Simulado" asp-action="SalvarRespostas">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Simulado.Id" value="@Model.Simulado.Id" />
+
+                <div id="questoes-container">
+                    @for (int i = 0; i < Model.Simulado.simulado_Questaos.Count; i++)
+                    {
+                        var questao = Model.Simulado.simulado_Questaos[i].Questao;
+                        <div class="questao-paginada card mb-4 shadow" data-index="@i"
+                             ng-show="questoesVisiveis(@i)">
+                            <!-- controle via ng-show -->
+                            <div class="card-header">
+                                <h5>@($"{i + 1}. {questao.Titulo}")</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>@questao.Enunciado</p>
+
+                                @foreach (var opcao in new[] { "A", "B", "C", "D", "E" })
+                                {
+                                    var texto = questao.GetType().GetProperty("Opcao" + opcao)?.GetValue(questao)?.ToString();
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               type="radio"
+                                               name="Respostas[@questao.Id]"
+                                               value="@opcao"
+                                               id="q@questao.Id-@opcao" />
+                                        <label class="form-check-label" for="q@questao.Id-@opcao">@opcao) @texto</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Botões de navegação -->
+                <div class="d-flex justify-content-between mb-4">
+                    <button type="button" class="btn btn-primary" ng-click="voltarPagina()">Anterior</button>
+                    <button type="button" class="btn btn-primary" ng-click="proximaPagina()">Próxima</button>
+                </div>
+
+                <!-- Botão de Finalizar -->
+                <div class="text-center">
+                    <button type="button" class="btn btn-success" ng-click="abrirConfirmacao()">Finalizar Simulado</button>
+                </div>
+
+                <!-- Modal de Confirmação -->
+                <div class="modal fade" id="modalConfirmacao" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirmar Finalização</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Você tem certeza de que deseja finalizar o simulado?</p>
+                                <p>Verifique se todas as questões foram respondidas:</p>
+
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Questão</th>
+                                            <th>Respondida?</th>
+                                            <th>Questão</th>
+                                            <th>Respondida?</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- ng-repeat para linhas de confirmação -->
+                                        <tr ng-repeat="linha in linhasConfirmacao">
+                                            <td>Questão {{linha.esquerda.numero}}</td>
+                                            <td ng-class="{'text-success': linha.esquerda.respondida, 'text-danger': !linha.esquerda.respondida}">
+                                                {{linha.esquerda.respondida ? '✔️ Sim' : '❌ Não'}}
+                                            </td>
+
+                                            <td ng-if="linha.direita">Questão {{linha.direita.numero}}</td>
+                                            <td ng-if="linha.direita" ng-class="{'text-success': linha.direita.respondida, 'text-danger': !linha.direita.respondida}">
+                                                {{linha.direita.respondida ? '✔️ Sim' : '❌ Não'}}
+                                            </td>
+
+                                            <td ng-if="!linha.direita"></td>
+                                            <td ng-if="!linha.direita"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-success" ng-click="enviarFormulario()">Confirmar e Enviar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.simuladoData = {
+            simuladoId: @Model.Simulado.Id,
+            questoesOrdem: [@string.Join(", ", Model.Simulado.simulado_Questaos.Select(q => q.Questao.Id))]
+        };
+    </script>
+}

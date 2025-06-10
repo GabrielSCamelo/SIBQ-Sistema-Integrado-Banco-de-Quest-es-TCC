@@ -1,0 +1,193 @@
+﻿@model SIBQ.Models.SimuladoViewModel
+@{
+    ViewData["Title"] = "Meus Simulados";
+    var isProfessor = (bool)ViewBag.IsProfessor;
+}
+
+<div class="container mt-4" ng-app="simuladoApp" ng-controller="SimuladoController">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            @TempData["Warning"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="text-center mb-1">Meus Simulados</h5>
+        </div>
+        <div class="card-body">
+            <form ng-submit="pesquisarSimulados()">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label"><b>Data de Criação</b></label>
+                        <input type="text" class="form-control" ng-model="filtro.DataCriacao" id="dataCriacao" maxlength="10" placeholder="DD/MM/YYYY" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label"><b>Data de Expiração</b></label>
+                        <input type="text" class="form-control" ng-model="filtro.DataExpiracao" id="dataExpiracao" maxlength="10" placeholder="DD/MM/YYYY" />
+                    </div>
+                </div>
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <button type="submit" class="btn btn-primary">Pesquisar</button><a asp-area="" asp-controller="Simulado" asp-action="CriarSimulado" class="btn btn-success">Criar Novo Simulado</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover" ng-if="simulados.length > 0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Título</th>
+                        <th>Data Criação</th>
+                        <th>Data Expiração</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="simulado in simuladosPaginados()">
+                        <td>{{ simulado.titulo }}</td>
+                        <td>{{ simulado.dataCriacao | date:'dd/MM/yyyy' }}</td>
+                        <td>{{ simulado.dataExpiracao | date:'dd/MM/yyyy' }}</td>
+                        <td>
+                            <span ng-if="simulado.foiRealizado" class="badge bg-success">Realizado</span>
+                            <span ng-if="!simulado.foiRealizado && !simulado.ativo " class="badge bg-secondary">Expirado</span>
+                            <span ng-if="!simulado.foiRealizado && simulado.ativo " class="badge bg-warning text-dark">Em Aberto</span>
+                        </td>
+                        <td>
+                            @if (isProfessor)
+                            {
+                                <a href="/Simulado/VSimulado?id={{simulado.id}}" class="btn btn-info btn-sm">Visualizar</a>
+                            }
+                            else
+                            {
+                                <a ng-href="/Simulado/VSimulado?id={{simulado.id}}" ng-if="simulado.foiRealizado" class="btn btn-info btn-sm">Visualizar</a>
+                                <!-- Modal -->
+                                <!-- Botão que abre o modal -->
+                                <a href="" 
+                                   ng-click="confirmarInicio(simulado.id)" 
+                                   ng-if="!simulado.foiRealizado && simulado.ativo"
+                                   class="btn btn-success btn-sm ms-2">
+                                    Fazer Simulado
+                                </a>
+
+                                <!-- Modal -->
+                                <div class="modal fade" id="modalConfirmacaoSimulado" tabindex="-1" aria-labelledby="modalSimuladoLabel" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Instruções do Simulado</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p><strong>Atenção!</strong> Ao iniciar o simulado:</p>
+                                                <ul>
+                                                    <li>Não é possível refazer ou retornar após o envio.</li>
+                                                    <li>Evite atualizar ou fechar a página, ou suas respostas poderão ser perdidas.</li>
+                                                    <li>Você só poderá realizá-lo <strong>uma única vez</strong>.</li>
+                                                </ul>
+                                                <p>Está pronto para começar?</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                                                <a class="btn btn-success" ng-href="/Simulado/FSimulado?id={{simuladoIdSelecionado}}">Iniciar</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            }
+                            <a ng-if="!simulado.foiRealizado && simulado.ativo && simulado.criadorId == simulado.idUsuario"
+                               class="btn btn-danger btn-sm ms-2"
+                               ng-click="excluirSimulado(simulado.id)">
+                                Excluir
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <nav class="mt-3" ng-if="totalPaginas > 1">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" ng-class="{disabled: paginaAtual == 1}">
+                        <a class="page-link" href="#" ng-click="mudarPagina(1)">«</a>
+                    </li>
+                    <li class="page-item" ng-class="{disabled: paginaAtual == 1}">
+                        <a class="page-link" href="#" ng-click="mudarPagina(paginaAtual - 1)">Anterior</a>
+                    </li>
+
+                    <li class="page-item" ng-repeat="n in paginasVisiveis()" ng-class="{active: paginaAtual == n}">
+                        <a class="page-link" href="#" ng-click="mudarPagina(n)">{{n}}</a>
+                    </li>
+
+                    <li class="page-item" ng-class="{disabled: paginaAtual == totalPaginas}">
+                        <a class="page-link" href="#" ng-click="mudarPagina(paginaAtual + 1)">Próxima</a>
+                    </li>
+                    <li class="page-item" ng-class="{disabled: paginaAtual == totalPaginas}">
+                        <a class="page-link" href="#" ng-click="mudarPagina(totalPaginas)">»</a>
+                    </li>
+                </ul>
+            </nav>
+            <div ng-if="simulados.length == 0" class="text-muted text-center"><b>Nenhum simulado encontrado.</b></div>
+        </div>
+    </div>
+</div>
+<script>
+    // Referências de timeout
+    let timeoutIdCriacao = null;
+    let timeoutIdExpiracao = null;
+
+    function aplicarMascaraData(input) {
+        let valor = input.value.replace(/\D/g, '');
+
+        // Aplica a máscara apenas se houver ao menos 6 dígitos (ex: 250522)
+        if (valor.length < 6) return;
+
+        // Limita a 8 dígitos (ddmmaaaa)
+        if (valor.length > 8) {
+            valor = valor.substring(0, 8);
+        }
+
+        // Aplica a formatação dd/mm/aaaa
+        if (valor.length > 4) {
+            valor = valor.replace(/(\d{2})(\d{2})(\d{1,4})/, '$1/$2/$3');
+        } else if (valor.length > 2) {
+            valor = valor.replace(/(\d{2})(\d{1,2})/, '$1/$2');
+        }
+
+        input.value = valor;
+    }
+
+    function criarHandlerComDelay(input, timeoutRefName) {
+        return function () {
+            // Cancela o timeout anterior se o usuário continuar digitando
+            clearTimeout(window[timeoutRefName]);
+
+            // Cria novo timeout para aplicar a máscara após 60 segundos
+            window[timeoutRefName] = setTimeout(() => {
+                aplicarMascaraData(input);
+            }, 60000); // 1 minuto
+        };
+    }
+
+    const inputCriacao = document.getElementById('dataCriacao');
+    const inputExpiracao = document.getElementById('dataExpiracao');
+
+    inputCriacao.addEventListener('input', criarHandlerComDelay(inputCriacao, 'timeoutIdCriacao'));
+    inputExpiracao.addEventListener('input', criarHandlerComDelay(inputExpiracao, 'timeoutIdExpiracao'));
+
+    // Aplica a máscara ao sair do campo (se preenchido)
+    inputCriacao.addEventListener('blur', () => aplicarMascaraData(inputCriacao));
+    inputExpiracao.addEventListener('blur', () => aplicarMascaraData(inputExpiracao));
+</script>

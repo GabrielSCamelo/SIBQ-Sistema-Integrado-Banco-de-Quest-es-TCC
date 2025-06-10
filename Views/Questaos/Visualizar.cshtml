@@ -1,0 +1,78 @@
+﻿@model SIBQ.Models.Questao
+@{
+    bool isProfessor = (bool)ViewBag.IsProfessor;
+}
+
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">@Model.Titulo</h2>
+        </div>
+
+        <div class="card-body">
+            <p><strong>Disciplina:</strong> @Model.Disciplina.Nome</p>
+            <p><strong>Enunciado:</strong></p>
+            <p class="border p-3 rounded bg-light">@Model.Enunciado</p>
+
+            <h5>Opções:</h5>
+            <ul class="list-group mb-3">
+                <li class="list-group-item">A) @Model.OpcaoA</li>
+                <li class="list-group-item">B) @Model.OpcaoB</li>
+                <li class="list-group-item">C) @Model.OpcaoC</li>
+                <li class="list-group-item">D) @Model.OpcaoD</li>
+                <li class="list-group-item">E) @Model.OpcaoE</li>
+            </ul>
+
+            <div class="alert alert-info">
+                <button type="button" class="btn btn-sm btn-outline-secondary ms-auto"
+                        title="Ver Resposta" onclick="toggleResposta()">
+                    <i id="iconOlho" class="bi bi-eye-slash-fill"></i>
+                </button>
+                <strong>Resposta Correta:</strong>
+                <span id="respostaCorreta" style="filter: blur(5px); cursor: pointer; margin-left: 8px;"
+                      title="Clique para mostrar" onclick="toggleResposta()">
+                    @Model.OpcaoCorretaIndex
+                </span>
+
+
+            </div>
+
+            <div class="d-flex justify-content-between">
+                @if (isProfessor)
+                {
+                    <a href="@Url.Action("Alterar", "Questaos", new { id = Model.Id })" class="btn btn-outline-warning">
+                        Editar
+                    </a>
+                }
+                <a href="@Url.Action("ListaQuestoes", "Questaos", new { id = Model.Id })" " class="btn btn-outline-primary">
+                    Retornar a Pagina Anterior
+                </a>
+                @if (isProfessor)
+                {
+                    <a href="@Url.Action("Deletar", "Questaos", new { id = Model.Id })" " class="btn btn-outline-danger"
+                       onclick="return confirm('Tem certeza que deseja deletar esta questão?');">
+                        Deletar
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+        function toggleResposta() {
+        const resposta = document.getElementById('respostaCorreta');
+        const icon = document.getElementById('iconOlho');
+
+        if (resposta.style.filter === 'none') {
+            // Está visível — esconder
+            resposta.style.filter = 'blur(5px)';
+            resposta.title = 'Clique para mostrar';
+            icon.className = 'bi bi-eye-slash-fill';  // olho fechado
+        } else {
+            // Está borrado — mostrar
+            resposta.style.filter = 'none';
+            resposta.title = 'Clique para esconder';
+            icon.className = 'bi bi-eye-fill';  // olho aberto
+        }
+    }
+</script>

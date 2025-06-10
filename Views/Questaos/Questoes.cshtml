@@ -1,0 +1,77 @@
+﻿@model SIBQ.Models.QuestaoViewModel
+@{
+    ViewData["Title"] = "Cadastro de Questões";
+}
+
+<div class="container my-5">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            @TempData["Warning"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+             <h5 class="text-center mb-1">Cadastro de Questões</h5>
+        </div>
+        <div class="card-body">
+            @using (Html.BeginForm("CadastrarQuestao", "Questaos", FormMethod.Post))
+            {
+                <div class="mb-3">
+                    <b>@Html.LabelFor(m => m.Questao.Titulo, "Título:", new { @class = "form-label" })</b>
+                    @Html.TextBoxFor(m => m.Questao.Titulo, new { @class = "form-control", required = "required" })
+                </div>
+
+                <div class="mb-3">
+                    <b>@Html.LabelFor(m => m.Questao.Enunciado, "Enunciado:", new { @class = "form-label" })</b>
+                    @Html.TextAreaFor(m => m.Questao.Enunciado, new { @class = "form-control", rows = 4, required = "required" })
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <b>@Html.Label("Questao.DisciplinaId", "Disciplina:", new { @class = "form-label" })</b>
+                    <select class="form-select" name="Questao.DisciplinaId" required>
+                      <option value="" disabled selected>Selecione uma disciplina</option>
+                      @foreach (var disciplina in Model.Disciplinas)
+                      {
+                        <option value="@disciplina.Id">@disciplina.Nome</option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="col-md-6 mb-4">
+                   <b>@Html.Label("Questao.OpcaoCorretaIndex", "Alternativa Correta:", new { @class = "form-label" })</b>
+                    <select class="form-select" name="Questao.OpcaoCorretaIndex" required>
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                      <option value="C">C</option>
+                      <option value="D">D</option>
+                      <option value="E">E</option>
+                    </select>
+                  </div>
+                </div>
+
+
+                <fieldset class="mb-3">
+                    <b><legend class="col-form-label pt-0">Alternativas:</legend></b>
+                    @Html.TextBox("Questao.OpcaoA", null, new { @class = "form-control mb-2", placeholder = "Alternativa A", required = "required" })
+                    @Html.TextBox("Questao.OpcaoB", null, new { @class = "form-control mb-2", placeholder = "Alternativa B", required = "required" })
+                    @Html.TextBox("Questao.OpcaoC", null, new { @class = "form-control mb-2", placeholder = "Alternativa C", required = "required" })
+                    @Html.TextBox("Questao.OpcaoD", null, new { @class = "form-control mb-2", placeholder = "Alternativa D", required = "required" })
+                    @Html.TextBox("Questao.OpcaoE", null, new { @class = "form-control mb-2", placeholder = "Alternativa E", required = "required" })
+                </fieldset>
+
+                <button type="submit" class="btn btn-primary w-100">Cadastrar</button>
+            }
+        </div>
+    </div>
+</div>

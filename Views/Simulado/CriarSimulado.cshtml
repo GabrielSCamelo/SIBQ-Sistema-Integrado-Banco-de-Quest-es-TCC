@@ -1,0 +1,76 @@
+﻿@model SIBQ.Models.CriarSimuladoViewModel
+
+@{
+    ViewData["Title"] = "Criar Simulado";
+    var isProfessor = (bool)ViewBag.IsProfessor;
+}
+
+<div class="container my-5">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            @TempData["Warning"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="text-center mb-1">Criar Simulado</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="CadastrarSimulado" method="post">
+                <div class="row mb-3">
+                    <div class="col-md-9">
+                        <label asp-for="Titulo" class="form-label"><b>Titulo</b></label>
+                        <input asp-for="Titulo" class="form-control" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="QuantidadeQuestoes" class="form-label"><b>Quantidade de Questões</b></label>
+                        <input asp-for="QuantidadeQuestoes" class="form-control" min="5" max="25" required />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label class="form-label"><b>Selecione as Disciplinas:</b></label>
+                        @foreach (var disciplina in Model.DisciplinasDisponiveis)
+                        {
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input"
+                                       name="DisciplinasSelecionadas" value="@disciplina.Id" id="disciplina_@disciplina.Id" />
+                                <label class="form-check-label" for="disciplina_@disciplina.Id">@disciplina.Nome</label>
+                            </div>
+                        }
+                    </div>
+
+                    @if (isProfessor)
+                    {
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Selecione as Turmas:</label>
+                            @foreach (var turma in Model.TurmasDisponiveis)
+                            {
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input"
+                                           name="TurmasSelecionadas" value="@turma.Id" id="turma_@turma.Id" />
+                                    <label class="form-check-label" for="turma_@turma.Id">
+                                        @turma.Periodo @turma.Disciplina.Sigla
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Criar</button>
+            </form>
+        </div>
+    </div>
+</div>

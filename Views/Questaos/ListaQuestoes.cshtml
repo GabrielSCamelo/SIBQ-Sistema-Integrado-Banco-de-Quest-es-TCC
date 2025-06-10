@@ -1,0 +1,111 @@
+﻿@model SIBQ.Models.QuestaoViewModel
+@{
+    ViewData["Title"] = "Lista Questões";
+    var isProfessor = (bool)ViewBag.IsProfessor;
+}
+
+<div class="container mt-5" ng-app="SIBQ" ng-controller="QuestoesController">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning">
+            @TempData["Warning"]
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Filtros de Pesquisa</h5>
+            @if (isProfessor)
+            {
+                <a asp-area="" asp-controller="Questaos" asp-action="Questoes" class="btn btn-success">Cadastrar Nova Questão</a>
+            }
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-8">
+                    <input type="text" ng-model="filtro.titulo" placeholder="Buscar por título" class="form-control" />
+                </div>
+
+                <div class="col-md-2">
+                    <select ng-model="filtro.disciplina" class="form-control">
+                        <option value="">Todas as Disciplinas</option>
+                        @foreach (var d in Model.Disciplinas)
+                        {
+                            <option value="@d.Id">@d.Nome</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <button ng-click="carregarQuestoes()" class="btn btn-primary w-100">Pesquisar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped table-responsive table-bordered shadow-sm" ng-if="questoes.length > 0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="col-lg-8">Título</th>
+                        <th class="col-lg-2">Disciplina</th>
+                        <th class="col-lg-2">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr
+                    <tr ng-repeat="q in questoesPaginadas()">
+                        <td class="col-lg-8">{{ q.titulo }}</td>
+                        <td class="col-lg-2">{{ q.disciplinaNome }}</td>
+                        <td class="col-lg-2">
+                            <a ng-href="/Questaos/Visualizar?id={{ q.id }}" class="btn btn-outline-info ">
+                                Ver Detalhes
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <nav class="mt-3" ng-if="totalPaginas > 1">
+                <ul class="pagination justify-content-center">
+
+                    
+                    
+
+                    <!-- Botão Anterior -->
+                    <li class="page-item" ng-class="{disabled: paginaAtual == 1}">
+                        <a class="page-link" href="#" ng-click="mudarPagina(paginaAtual - 1)">Anterior</a>
+                    </li>
+
+                    <!-- Botão para ir à primeira página (só aparece se não estiver na primeira) -->
+                    <li class="page-item" ng-if="paginaAtual > 1 && paginaAtual > itensPorPagina+1">
+                        <a class="page-link" href="#" ng-click="mudarPagina(1)">1</a>
+                    </li>
+
+                    <!-- Botões das páginas visíveis -->
+                    <li class="page-item" ng-repeat="n in paginasVisiveis()" ng-class="{active: paginaAtual == n}">
+                        <a class="page-link" href="#" ng-click="mudarPagina(n)">{{n}}</a>
+                    </li>
+
+                    <!-- Botão para ir à última página (só aparece se não estiver na última) -->
+                    <li class="page-item" ng-if="paginaAtual < totalPaginas && paginaAtual < totalPaginas - itensPorPagina+1 ">
+                        <a class="page-link" href="#" ng-click="mudarPagina(totalPaginas)">{{totalPaginas}}</a>
+                    </li>
+
+                    <!-- Botão Próxima -->
+                    <li class="page-item" ng-class="{disabled: paginaAtual == totalPaginas}">
+                        <a class="page-link" href="#" ng-click="mudarPagina(paginaAtual + 1)">Próxima</a>
+                    </li>
+
+                    
+                </ul>
+            </nav>
+            <div ng-if="questoes.length == 0" class="text-muted text-center"><b>Nenhuma Questão Encontrada.</b></div>
+        </div>
+    </div>
+</div>

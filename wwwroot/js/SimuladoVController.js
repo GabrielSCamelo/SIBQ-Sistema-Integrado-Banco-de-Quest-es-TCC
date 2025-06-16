@@ -3,12 +3,12 @@
 
     // Dados globais setados no window pelo backend
     vm.isProfessor = window.isProfessor;
-    vm.totalQuestoes = window.totalQuestoes;
+    vm.totalQuestoes = window.simuladoData?.questoesOrdem?.length || window.totalQuestoes;
     vm.desempenhoData = window.desempenhoData || {};
 
     // Paginação
     vm.paginaAtual = 0;
-    vm.porPagina = 5;
+    vm.porPagina = 5; // Altere para 1 para mostrar uma questão por página
 
     vm.isQuestaoVisivel = function (index) {
         const start = vm.paginaAtual * vm.porPagina;
@@ -19,12 +19,14 @@
     vm.proximaPagina = function () {
         if ((vm.paginaAtual + 1) * vm.porPagina < vm.totalQuestoes) {
             vm.paginaAtual++;
+            $scope.$applyAsync();
         }
     };
 
     vm.voltarPagina = function () {
         if (vm.paginaAtual > 0) {
             vm.paginaAtual--;
+            $scope.$applyAsync();
         }
     };
 

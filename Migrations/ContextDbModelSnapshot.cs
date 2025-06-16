@@ -255,11 +255,9 @@ namespace SIBQ.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Nome")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Sigla")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
@@ -275,40 +273,32 @@ namespace SIBQ.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("DisciplinaId")
+                    b.Property<int?>("DisciplinaId")
                         .HasColumnType("int");
 
                     b.Property<string>("Enunciado")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("OpcaoA")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("OpcaoB")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("OpcaoC")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("OpcaoCorretaIndex")
-                        .IsRequired()
                         .HasMaxLength(1)
                         .HasColumnType("varchar(1)");
 
                     b.Property<string>("OpcaoD")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("OpcaoE")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Titulo")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
@@ -326,11 +316,10 @@ namespace SIBQ.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("CriadoPorAluno")
+                    b.Property<bool?>("CriadoPorAluno")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("CriadorId")
-                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("DataCriacao")
@@ -339,19 +328,16 @@ namespace SIBQ.Migrations
                     b.Property<DateTime>("DataExpiracao")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("QuantidadeQuestoes")
+                    b.Property<int?>("QuantidadeQuestoes")
                         .HasColumnType("int");
 
                     b.Property<string>("Titulo")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Turmas")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("disciplinas")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
@@ -428,28 +414,20 @@ namespace SIBQ.Migrations
                     b.Property<int>("QuestaoId")
                         .HasColumnType("int");
 
-                    b.Property<int>("SimuladoAlunoId")
-                        .HasColumnType("int");
+                    b.Property<string>("AlunoId")
+                        .HasColumnType("varchar(255)");
 
-                    b.Property<int>("Id")
+                    b.Property<int>("SimuladoId")
                         .HasColumnType("int");
 
                     b.Property<string>("Resposta")
-                        .IsRequired()
                         .HasColumnType("varchar(1)");
 
-                    b.Property<string>("SimuladoAlunoAlunoId")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
+                    b.HasKey("QuestaoId", "AlunoId", "SimuladoId");
 
-                    b.Property<int>("SimuladoAlunoSimuladoId")
-                        .HasColumnType("int");
+                    b.HasIndex("SimuladoId", "AlunoId");
 
-                    b.HasKey("QuestaoId", "SimuladoAlunoId");
-
-                    b.HasIndex("SimuladoAlunoSimuladoId", "SimuladoAlunoAlunoId");
-
-                    b.ToTable("Simulado_Aluno_Resposta");
+                    b.ToTable("Simulados_Alunos_Respostas");
                 });
 
             modelBuilder.Entity("SIBQ.Models.Usuario", b =>
@@ -479,7 +457,6 @@ namespace SIBQ.Migrations
                     b.HasBaseType("SIBQ.Models.Usuario");
 
                     b.Property<string>("IdFuncional")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasDiscriminator().HasValue("Professor");
@@ -559,9 +536,7 @@ namespace SIBQ.Migrations
                 {
                     b.HasOne("SIBQ.Models.Disciplina", "Disciplina")
                         .WithMany()
-                        .HasForeignKey("DisciplinaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("DisciplinaId");
 
                     b.Navigation("Disciplina");
                 });
@@ -570,9 +545,7 @@ namespace SIBQ.Migrations
                 {
                     b.HasOne("SIBQ.Models.Usuario", "Criador")
                         .WithMany()
-                        .HasForeignKey("CriadorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CriadorId");
 
                     b.Navigation("Criador");
                 });
@@ -586,7 +559,7 @@ namespace SIBQ.Migrations
                         .IsRequired();
 
                     b.HasOne("SIBQ.Models.Simulado", "Simulado")
-                        .WithMany()
+                        .WithMany("simulado_Alunos")
                         .HasForeignKey("SimuladoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -642,15 +615,15 @@ namespace SIBQ.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SIBQ.Models.Simulado_Aluno", "SimuladoAluno")
+                    b.HasOne("SIBQ.Models.Simulado_Aluno", "Simulado_Aluno")
                         .WithMany("Respostas")
-                        .HasForeignKey("SimuladoAlunoSimuladoId", "SimuladoAlunoAlunoId")
+                        .HasForeignKey("SimuladoId", "AlunoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Questao");
 
-                    b.Navigation("SimuladoAluno");
+                    b.Navigation("Simulado_Aluno");
                 });
 
             modelBuilder.Entity("SIBQ.Models.Questao", b =>
@@ -660,6 +633,8 @@ namespace SIBQ.Migrations
 
             modelBuilder.Entity("SIBQ.Models.Simulado", b =>
                 {
+                    b.Navigation("simulado_Alunos");
+
                     b.Navigation("simulado_Questaos");
                 });
 

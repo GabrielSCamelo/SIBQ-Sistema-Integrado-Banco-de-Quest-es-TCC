@@ -26,6 +26,8 @@
         <div class="card-body">
             @using (Html.BeginForm("CadastrarQuestao", "Questaos", FormMethod.Post))
             {
+                 @Html.HiddenFor(m => m.Questao.Id)
+
                 <div class="mb-3">
                     <b>@Html.LabelFor(m => m.Questao.Titulo, "Título:", new { @class = "form-label" })</b>
                     @Html.TextBoxFor(m => m.Questao.Titulo, new { @class = "form-control", required = "required" })
@@ -38,14 +40,14 @@
 
                 <div class="row">
                   <div class="col-md-6 mb-3">
-                    <b>@Html.Label("Questao.DisciplinaId", "Disciplina:", new { @class = "form-label" })</b>
-                    <select class="form-select" name="Questao.DisciplinaId" required>
-                      <option value="" disabled selected>Selecione uma disciplina</option>
-                      @foreach (var disciplina in Model.Disciplinas)
-                      {
-                        <option value="@disciplina.Id">@disciplina.Nome</option>
-                      }
-                    </select>
+                      <b>@Html.Label("Questao.DisciplinaId", "Disciplina:", new { @class = "form-label" })</b>
+                      <select class="form-select" name="Questao.DisciplinaId" required>
+                          <option value="" disabled >Selecione uma disciplina</option>
+                          @foreach (var disciplina in Model.Disciplinas)
+                          {
+                              <option value="@disciplina.Id" selected="@(disciplina.Id == Model.Questao.DisciplinaId ? "selected" : null)"> @disciplina.Nome </option>
+                          }
+                      </select>
                   </div>
 
                   <div class="col-md-6 mb-4">
@@ -59,7 +61,6 @@
                     </select>
                   </div>
                 </div>
-
 
                 <fieldset class="mb-3">
                     <b><legend class="col-form-label pt-0">Alternativas:</legend></b>

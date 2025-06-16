@@ -100,11 +100,11 @@ namespace SIBQ.Controllers
             return View(questao);
         }
 
-        // GET: /Questaos/Alterar/5
+        // GET: /Questaos/Alterar
         [HttpGet]
         public async Task<IActionResult> Alterar(int id)
         {
-            var questao = await _context.Questoes.FindAsync(id);
+            var questao = await _context.Questoes.Include(p => p.Disciplina).FirstOrDefaultAsync(p => p.Id == id);
             if (questao == null)
             {
                 TempData["Warning"] = "ERRO: Falha ao carregar a questão.";
@@ -140,7 +140,15 @@ namespace SIBQ.Controllers
                 return RedirectToAction("Questoes");
             }
 
-            if (model.Questao.Id == 0)
+            if (model.Questao.Id == 0 && !await _context.Questoes.AnyAsync(p => p.Enunciado == model.Questao.Enunciado ||
+            p.DisciplinaId == model.DisciplinaId ||
+            p.OpcaoA == model.Questao.OpcaoA ||
+            p.OpcaoB == model.Questao.OpcaoB ||
+            p.OpcaoC == model.Questao.OpcaoC ||
+            p.OpcaoD == model.Questao.OpcaoD ||
+            p.OpcaoE == model.Questao.OpcaoE ||
+            p.Titulo == model.Questao.Titulo ||
+            p.OpcaoA == model.Questao.OpcaoA))
             {
                 _context.Questoes.Add(model.Questao);
                 TempData["Success"] = "Questão cadastrada com sucesso.";

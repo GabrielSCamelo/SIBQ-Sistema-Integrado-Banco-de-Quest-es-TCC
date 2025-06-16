@@ -18,8 +18,8 @@ namespace SIBQ.DataBase
         public DbSet<Simulado_Aluno> Simulados_Alunos { get; set; }
         public DbSet<Aluno_Turma> Alunos_Turmas { get; set; }
         public DbSet<Simulado_Questao> simulado_Questaos { get; set; }
+        public DbSet<Simulado_Aluno_Resposta> Simulados_Alunos_Respostas { get; set; }
 
-        [Obsolete]
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -28,7 +28,7 @@ namespace SIBQ.DataBase
                 .HasKey(at => new { at.AlunoId, at.TurmaId });
 
             modelBuilder.Entity<Simulado_Aluno_Resposta>()
-                .HasKey(at => new { at.QuestaoId, at.SimuladoAlunoId });
+                .HasKey(at => new { at.QuestaoId,at.AlunoId,at.SimuladoId });
 
             modelBuilder.Entity<Simulado_Questao>()
                 .HasKey(at => new { at.SimuladoId, at.QuestaoId });

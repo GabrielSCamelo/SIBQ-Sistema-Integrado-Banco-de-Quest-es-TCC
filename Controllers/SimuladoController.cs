@@ -114,27 +114,42 @@ namespace SIBQ.Controllers
                 .Include(sa => sa.Aluno)
                     .ThenInclude(a => a.Turmas)
                         .ThenInclude(at => at.Turma)
+                            .ThenInclude(t => t.Disciplina)
                 .Include(sa => sa.Respostas)
                 .ToListAsync();
 
             var desempenhoPorTurma = new Dictionary<string, List<QuestaoDesempenho>>();
 
             var alunosPorTurma = alunosSimulado
-                .SelectMany(sa => sa.Aluno.Turmas.Select(t => new { TurmaNome = t.Turma.Disciplina.Nome + " " + t.Turma.Periodo, SimuladoAluno = sa }))
+                .Where(sa => sa.Aluno != null && sa.Aluno.Turmas != null)
+                .SelectMany(sa => sa.Aluno.Turmas!
+                    .Where(t => t.Turma != null && t.Turma.Disciplina != null && t.Turma.Periodo != null)
+                    .Select(t => new
+                    {
+                        TurmaNome = $"{t.Turma.Disciplina.Nome} {t.Turma.Periodo}",
+                        SimuladoAluno = sa
+                    }))
                 .GroupBy(x => x.TurmaNome);
+
+            var questoes = simulado.simulado_Questaos?.Where(q => q.Questao != null).OrderBy(q => q.Questao!.Id).ToList();
+            if (questoes == null)
+                return desempenhoPorTurma;
 
             foreach (var grupo in alunosPorTurma)
             {
                 var desempenho = new List<QuestaoDesempenho>();
 
-                foreach (var sq in simulado.simulado_Questaos.OrderBy(q => q.Questao.Id))
+                foreach (var sq in questoes)
                 {
-                    int questaoId = sq.Questao.Id;
+                    int questaoId = sq.Questao!.Id;
                     int acertos = 0, total = 0;
 
                     foreach (var item in grupo)
                     {
-                        var resposta = item.SimuladoAluno.Respostas.FirstOrDefault(r => r.QuestaoId == questaoId);
+                        var respostas = item.SimuladoAluno.Respostas;
+                        if (respostas == null) continue;
+
+                        var resposta = respostas.FirstOrDefault(r => r.QuestaoId == questaoId);
                         if (resposta != null)
                         {
                             total++;
@@ -145,7 +160,7 @@ namespace SIBQ.Controllers
 
                     desempenho.Add(new QuestaoDesempenho
                     {
-                        QuestaoNumero = sq.Questao.Id,
+                        QuestaoNumero = sq.Questao.Titulo,
                         Acertos = acertos,
                         Total = total
                     });
@@ -221,14 +236,88 @@ namespace SIBQ.Controllers
 
             var simulado = await _context.Simulados
                 .Include(s => s.simulado_Questaos)
-                    .ThenInclude(sq => sq.Questao).ThenInclude(sq => sq.Disciplina)
+                    .ThenInclude(sq => sq.Questao).ThenInclude(q => q.Disciplina)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
             if (simulado == null) return NotFound();
 
             if (isProfessor)
             {
-                ViewBag.DesempenhoPorTurma = await ObterDesempenhoPorTurmaAsync(simulado, id);
+                // Obtem desempenho por turma (por questão)
+                var desempenhoPorTurma = await ObterDesempenhoPorTurmaAsync(simulado, id);
+                ViewBag.DesempenhoPorTurma = desempenhoPorTurma;
+
+                // Obtem estatística de % de alunos que tiraram >= 60% de acertos por turma
+                var alunosSimulado = await _context.Simulados_Alunos
+                    .Where(sa => sa.SimuladoId == id)
+                    .Include(sa => sa.Aluno)
+                        .ThenInclude(a => a.Turmas)
+                            .ThenInclude(at => at.Turma)
+                                .ThenInclude(t => t.Disciplina)
+                    .Include(sa => sa.Respostas)
+                    .ToListAsync();
+
+                var alunosPorTurma = alunosSimulado
+                    .Where(sa => sa.Aluno != null && sa.Aluno.Turmas != null)
+                    .SelectMany(sa => sa.Aluno.Turmas!
+                        .Where(t => t.Turma != null && t.Turma.Disciplina != null && t.Turma.Periodo != null)
+                        .Select(t => new
+                        {
+                            TurmaNome = $"{t.Turma.Disciplina.Nome} {t.Turma.Periodo}",
+                            TurmaId = t.Turma.Id,
+                            SimuladoAluno = sa
+                        }))
+                    .GroupBy(x => x.TurmaNome);
+
+                var questoes = await _context.Questoes
+                    .Where(q => q.simulado_Questaos.Any(sq => sq.SimuladoId == id))
+                    .ToListAsync();
+
+                var mediaPorTurma = new Dictionary<string, object>();
+
+                foreach (var grupo in alunosPorTurma)
+                {
+                    var turmaId = grupo.First().TurmaId;
+
+                    var totalAlunosTurma = await _context.Alunos_Turmas
+                        .Where(at => at.TurmaId == turmaId)
+                        .Select(at => at.AlunoId)
+                        .Distinct()
+                        .CountAsync();
+
+                    int alunosAcima60 = 0;
+
+                    foreach (var alunoTurma in grupo.GroupBy(x => x.SimuladoAluno.AlunoId))
+                    {
+                        var aluno = alunoTurma.First().SimuladoAluno;
+                        var respostas = aluno.Respostas ?? new List<Simulado_Aluno_Resposta>();
+
+                        int totalQuestoes = questoes.Count;
+                        int totalAcertos = 0;
+
+                        foreach (var q in questoes)
+                        {
+                            var resp = respostas.FirstOrDefault(r => r.QuestaoId == q.Id);
+                            if (resp != null && resp.Resposta == q.OpcaoCorretaIndex)
+                                totalAcertos++;
+                        }
+
+                        double percentual = totalQuestoes > 0
+                            ? (double)totalAcertos / totalQuestoes * 100
+                            : 0;
+
+                        if (percentual >= 60)
+                            alunosAcima60++;
+                    }
+
+                    mediaPorTurma[grupo.Key] = new
+                    {
+                        TotalAlunos = totalAlunosTurma,
+                        AcimaDe60 = alunosAcima60
+                    };
+                }
+
+                ViewBag.MediaPorTurma = mediaPorTurma;
             }
             else
             {

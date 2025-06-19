@@ -49,11 +49,28 @@
                 </a>
                 @if (isProfessor)
                 {
-                    <a href="@Url.Action("Deletar", "Questaos", new { id = Model.Id })" " class="btn btn-outline-danger"
-                       onclick="return confirm('Tem certeza que deseja deletar esta questão?');">
+                    <a href="#" class="btn btn-outline-danger" id="btnAbrirModalDeletar" style="cursor:pointer;">
                         Deletar
                     </a>
                 }
+            </div>
+            <!-- Modal de Confirmação para Deletar Questão -->
+            <div class="modal fade" id="modalConfirmarDeletar" tabindex="-1" aria-labelledby="modalConfirmarDeletarLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalConfirmarDeletarLabel">Confirmação</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        </div>
+                        <div class="modal-body">
+                            Tem certeza que deseja deletar esta questão?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" id="btnConfirmarDeletar">Deletar</button>
+                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -75,4 +92,23 @@
             icon.className = 'bi bi-eye-fill';  // olho aberto
         }
     }
+    document.addEventListener('DOMContentLoaded', function () {
+        var btnAbrir = document.getElementById('btnAbrirModalDeletar');
+        var btnConfirmar = document.getElementById('btnConfirmarDeletar');
+        var modalElement = document.getElementById('modalConfirmarDeletar');
+        var modal = new bootstrap.Modal(modalElement);
+
+        // Url para deletar a questão
+        var urlDeletar = '@Url.Action("Deletar", "Questaos", new { id = Model.Id })';
+
+        btnAbrir.addEventListener('click', function (e) {
+            e.preventDefault();
+            modal.show();
+        });
+
+        btnConfirmar.addEventListener('click', function () {
+            // Redireciona para a url de exclusão
+            window.location.href = urlDeletar;
+        });
+    });
 </script>

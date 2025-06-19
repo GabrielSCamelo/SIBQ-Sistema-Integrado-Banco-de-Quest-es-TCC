@@ -39,27 +39,29 @@
                 </div>
 
                 <div class="row">
-                  <div class="col-md-6 mb-3">
-                      <b>@Html.Label("Questao.DisciplinaId", "Disciplina:", new { @class = "form-label" })</b>
-                      <select class="form-select" name="Questao.DisciplinaId" required>
-                          <option value="" disabled >Selecione uma disciplina</option>
-                          @foreach (var disciplina in Model.Disciplinas)
-                          {
-                              <option value="@disciplina.Id" selected="@(disciplina.Id == Model.Questao.DisciplinaId ? "selected" : null)"> @disciplina.Nome </option>
-                          }
-                      </select>
-                  </div>
+                      <div class="col-md-6 mb-3">
+                          <b>@Html.Label("Questao.DisciplinaId", "Disciplina:", new { @class = "form-label" })</b>
+                          <select class="form-select" name="Questao.DisciplinaId" required>
+                              <option value="" selected disabled >Selecione uma disciplina</option>
+                              @foreach (var disciplina in Model.Disciplinas)
+                              {
+                                  if(Model.Questao != null){
+                                        <option value="@disciplina.Id" selected="@(disciplina.Id == Model.Questao.DisciplinaId ? "selected" : null)"> @disciplina.Nome </option>
+                                    }
+                                    else
+                                    {
+                                         <option value="@disciplina.Id"> @disciplina.Nome </option>
+                                    }
+                                }
+                          </select>
+                      </div>
 
-                  <div class="col-md-6 mb-4">
-                   <b>@Html.Label("Questao.OpcaoCorretaIndex", "Alternativa Correta:", new { @class = "form-label" })</b>
-                    <select class="form-select" name="Questao.OpcaoCorretaIndex" required>
-                      <option value="A">A</option>
-                      <option value="B">B</option>
-                      <option value="C">C</option>
-                      <option value="D">D</option>
-                      <option value="E">E</option>
-                    </select>
-                  </div>
+                    <div class="col-md-6 mb-4">
+                        <b>@Html.LabelFor(m => m.Questao.OpcaoCorretaIndex, new { @class = "form-label" })</b>
+                        @Html.DropDownListFor(m => m.Questao.OpcaoCorretaIndex, Model.Alternativas, "Selecione uma opção", new { @class = "form-select", required = "required" })
+                    </div>
+
+
                 </div>
 
                 <fieldset class="mb-3">

@@ -1,43 +1,40 @@
 ﻿app.controller('SimuladoVController', ['$scope', '$timeout', function ($scope, $timeout) {
-    const vm = this;
 
-    // Dados globais setados no window pelo backend
-    vm.isProfessor = window.isProfessor;
-    vm.totalQuestoes = window.simuladoData?.questoesOrdem?.length || window.totalQuestoes;
-    vm.desempenhoData = window.desempenhoData || {};
+    $scope.isProfessor = window.isProfessor;
+    $scope.totalQuestoes = window.simuladoData?.questoesOrdem?.length || 0;
+    $scope.desempenhoData = window.desempenhoData || {};
+    $scope.mediaPorTurma = window.mediaPorTurma || {};
 
     // Paginação
-    vm.paginaAtual = 0;
-    vm.porPagina = 5; // Altere para 1 para mostrar uma questão por página
+    $scope.paginaAtual = 0;
+    $scope.porPagina = 5;
 
-    vm.isQuestaoVisivel = function (index) {
-        const start = vm.paginaAtual * vm.porPagina;
-        const end = start + vm.porPagina;
+    $scope.isQuestaoVisivel = function (index) {
+        let start = $scope.paginaAtual * $scope.porPagina;
+        let end = start + $scope.porPagina;
         return index >= start && index < end;
     };
 
-    vm.proximaPagina = function () {
-        if ((vm.paginaAtual + 1) * vm.porPagina < vm.totalQuestoes) {
-            vm.paginaAtual++;
-            $scope.$applyAsync();
+    $scope.proximaPagina = function () {
+        if (($scope.paginaAtual + 1) * $scope.porPagina < $scope.totalQuestoes) {
+            $scope.paginaAtual++;
         }
     };
 
-    vm.voltarPagina = function () {
-        if (vm.paginaAtual > 0) {
-            vm.paginaAtual--;
-            $scope.$applyAsync();
+    $scope.voltarPagina = function () {
+        if ($scope.paginaAtual > 0) {
+            $scope.paginaAtual--;
         }
     };
 
-    // Relatório desempenho
-    vm.turmas = Object.keys(vm.desempenhoData);
-    vm.turmaSelecionada = vm.turmas.length ? vm.turmas[0] : null;
-    vm.dadosDesempenho = [];
+    $scope.turmas = Object.keys($scope.desempenhoData);
+    $scope.turmaSelecionada = null;
+    $scope.dadosDesempenho = [];
+    $scope.totalAlunosSelecionado = 0;
 
     let grafico = null;
 
-    function criarGrafico(labels, percentuais, cores) {
+    function criarGrafico(labels, dados, cores) {
         const ctx = document.getElementById("graficoDesempenho").getContext("2d");
 
         if (grafico) grafico.destroy();
@@ -47,18 +44,18 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: '% de Acertos',
-                    data: percentuais,
+                    label: '% de alunos com ≥ 60% de acertos',
+                    data: dados,
                     backgroundColor: cores
                 }]
             },
             options: {
                 scales: {
                     y: {
-                        min: 0,
+                        beginAtZero: true,
                         max: 100,
                         ticks: {
-                            callback: function (value) { return value + '%' }
+                            callback: function (value) { return value + '%'; }
                         }
                     }
                 },
@@ -69,40 +66,62 @@
         });
     }
 
-    vm.atualizarTabelaDesempenho = function () {
-        if (!vm.turmaSelecionada) {
-            vm.dadosDesempenho = [];
-            if (grafico) grafico.destroy();
+    // Função só para gráfico geral, mostra TODAS as turmas SEM filtro de seleção
+    $scope.atualizarGraficoGeral = function () {
+        const labels = [];
+        const valores = [];
+        const cores = [];
+
+        for (const [turma, dadosTurma] of Object.entries($scope.mediaPorTurma)) {
+            const total = dadosTurma.TotalAlunos || 1;
+            const acima60 = dadosTurma.AcimaDe60 || 0;
+            const pct = (acima60 / total) * 100;
+
+            labels.push(`${turma} (${total} Alunos)`);
+            valores.push(pct.toFixed(1));
+
+            cores.push(
+                pct < 30 ? "#e74c3c" :
+                    pct < 70 ? "#f1c40f" :
+                        "#27ae60"
+            );
+        }
+
+        criarGrafico(labels, valores, cores);
+    };
+
+    // Função que atualiza a tabela por turma selecionada e também atualiza o total de alunos da turma no cabeçalho
+    $scope.atualizarTabelaDesempenho = function () {
+        if (!$scope.turmaSelecionada) {
+            $scope.dadosDesempenho = [];
+            $scope.totalAlunosSelecionado = 0;
             return;
         }
 
-        const dados = vm.desempenhoData[vm.turmaSelecionada] || [];
-        vm.dadosDesempenho = dados.map(q => {
-            const pct = q.Total > 0 ? (q.Acertos / q.Total * 100) : 0;
-            return {
-                QuestaoNumero: q.QuestaoNumero,
-                Acertos: q.Acertos,
-                Total: q.Total,
-                PctAcerto: pct.toFixed(1)
-            };
-        });
+        const dados = $scope.desempenhoData[$scope.turmaSelecionada] || [];
 
-        const labels = vm.dadosDesempenho.map(q => "Q" + q.QuestaoNumero);
-        const percentuais = vm.dadosDesempenho.map(q => +q.PctAcerto);
-        const cores = percentuais.map(pct => {
-            if (pct < 30) return "#e74c3c";       // vermelho
-            else if (pct < 70) return "#f1c40f";  // amarelo
-            else return "#27ae60";                 // verde
-        });
+        $scope.dadosDesempenho = dados
+            .filter(q => q.Acertos > 0 || q.Total > 0)
+            .map(q => {
+                const pct = q.Total > 0 ? (q.Acertos / q.Total * 100) : 0;
+                return {
+                    QuestaoNumero: q.QuestaoNumero,
+                    Acertos: q.Acertos,
+                    Total: q.Total,
+                    PctAcerto: pct.toFixed(1)
+                };
+            });
 
-        // Usa $timeout para garantir atualização após render do DOM
-        $timeout(() => criarGrafico(labels, percentuais, cores), 0);
+        $scope.totalAlunosSelecionado = $scope.mediaPorTurma[$scope.turmaSelecionada]?.TotalAlunos || 0;
     };
 
-    // Inicializa após DOM pronto
     angular.element(document).ready(function () {
-        if (vm.turmaSelecionada) {
-            vm.atualizarTabelaDesempenho();
+        // Cria o gráfico geral logo que a página abre
+        $scope.atualizarGraficoGeral();
+
+        if ($scope.turmas.length > 0) {
+            $scope.turmaSelecionada = $scope.turmas[0];
+            $scope.atualizarTabelaDesempenho();
         }
     });
 }]);

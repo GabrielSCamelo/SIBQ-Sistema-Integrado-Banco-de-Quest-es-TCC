@@ -111,9 +111,23 @@
                             }
                             <a ng-if="!simulado.foiRealizado && simulado.ativo && simulado.criadorId == simulado.idUsuario"
                                class="btn btn-danger btn-sm ms-2"
-                               ng-click="excluirSimulado(simulado.id)">
+                               ng-click="confirmarExclusao(simulado)">
                                 Excluir
                             </a>
+                            <!-- Modal Genérico para Mensagens -->
+                            <div class="modal fade" id="modalMensagem" tabindex="-1" aria-labelledby="modalMensagemLabel" aria-hidden="true">
+                              <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title" id="modalMensagemLabel">{{modalTitulo}}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                  </div>
+                                  <div class="modal-body">
+                                    <p ng-bind-html="modalMensagem"></p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                         </td>
                     </tr>
                 </tbody>

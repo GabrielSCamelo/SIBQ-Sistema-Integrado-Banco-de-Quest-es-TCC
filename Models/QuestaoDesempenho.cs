@@ -2,7 +2,7 @@
 {
     public class QuestaoDesempenho
     {
-        public int? QuestaoNumero { get; set; }
+        public string? QuestaoNumero { get; set; }
         public int? Acertos { get; set; }
         public int? Total { get; set; }
     }
